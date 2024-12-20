@@ -1,6 +1,6 @@
 // script.js
 
-const apiUrl = "https://672dda15fd8979715643f643.mockapi.io/Pokemons";
+const apiUrl = "http://localhost:3000/api/items";
 
 // Function to fetch all Pokemons and display them
 async function getPokemons() {
@@ -20,8 +20,8 @@ function displayPokemons(pokemons) {
         pokemonDiv.innerHTML = `
             <h3>${pokemon.Name} (Pokedex #${pokemon.PokedexNum})</h3>
             <p>Type: ${pokemon.Type} | Gen: ${pokemon.Gen}</p>
-            <button class="edit" onclick="editPokemon('${pokemon.id}')">Edit</button>
-            <button class="delete" onclick="deletePokemon('${pokemon.id}')">Delete</button>
+            <button class="edit" onclick="editPokemon('${pokemon._id}')">Edit</button>
+            <button class="delete" onclick="deletePokemon('${pokemon._id}')">Delete</button>
         `;
         pokemonList.appendChild(pokemonDiv);
     });
