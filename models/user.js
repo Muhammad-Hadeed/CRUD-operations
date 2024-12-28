@@ -2,13 +2,10 @@ const mongoose = require('mongoose');
 const userAutherSchema = new mongoose.Schema({
    
     username: {
-            type : String,
-            required: [TransformStreamDefaultController , 'Username can not be empty'] 
+            type : String
     },
 
-    password: { type: String, 
-        required: [true,"Password should be filled"]
-
+    password: { type: String
    }
 
 })

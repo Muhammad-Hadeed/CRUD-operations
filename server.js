@@ -5,7 +5,8 @@ const Item = require('./models/model');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-
+const bcrypt = require('bcrypt');
+const User = require('./models/user');
 
 
 // Initialize Express
@@ -23,10 +24,11 @@ app.use(session({
     maxAge: 1000 * 60 * 60,  // Session duration (1 hour)
     httpOnly: true,          // Makes the cookie inaccessible to client-side JavaScript
     secure: false,           // Set to true if using HTTPS
-  },
+  }
 }));
 
 app.set('view engine','ejs');
+app.set('views', 'views');
 app.use(bodyParser.urlencoded({extended: true}));
 
 // Connect to MongoDB
@@ -41,19 +43,31 @@ mongoose.connect('mongodb://localhost:27017', {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-function isAdmin(req, res, next) {
-  if (req.query.isAdmin && req.query.isAdmin === 'true') {
-      return next();
-  } else {
-      return res.status(403).send('Not an Admin');
-  }
-}
-
+ function isAdmin(req, res, next) {
+   if (req.query.isAdmin && req.query.isAdmin === 'true') {
+       return next();
+   } else {
+       return res.status(403).send('Not an Admin');
+   }
+ }
+app.use(express.urlencoded({extended : true}));
 // Route to check the admin status (testing purpose)
 app.get('/admin', isAdmin, (req, res) => {
   res.send('Welcome Admin');
 });
+app.post('/register', async (req, res) =>{
+  const {password , username} = req.body;
+  const hash = await bcrypt.hash(password,12)
+  const user = new User({
+    username,
+    password : hash
+  })
+  await user.save();
+  req.session.user_id = user._id;
 
+  res.redirect('/')
+
+});
 app.get('/view-count', (req, res) => {
   if (!req.session.viewCount) {
       req.session.viewCount = 0;  // Initialize viewCount if it's not set
@@ -64,12 +78,41 @@ app.get('/view-count', (req, res) => {
 
 
 app.get('/secret',(req,res)=>{
-  res.send("Batman is Admin")
+  if(    !req.session.user_id) {
+    res.redirect('/login')
+  }
+  res.render('secret');
+})
+app.get('/',(req,res) => {
+  res.send('THIS IS HOME PAGE')
 })
 app.get('/register',(req,res)=>{
   res.render('register');
 })
 
+app.get('/login',(req, res )=>{
+  res.render('login');
+})
+
+app.post('/login',async (req, res )=>{
+  const {username,password} = req.body;
+  const user = await User.findOne({username})
+   const validPassword = bcrypt.compare(password, user.password)
+   if(validPassword){
+    req.session.user_id = user._id;
+    res.redirect('/secret');
+    res.send("YAY!!! Welcome")
+   }
+   else{
+    res.send("TRY AGAIN!!!")
+   }
+  })
+
+app.post('/logout', (req,res) =>{
+ // res.session.user_id = null;
+  req.session.destroy();
+  res.redirect('/login')
+})
 // Test route to set session data and cookies
 app.get('/set-session-cookie', (req, res) => {
   // Set session data
